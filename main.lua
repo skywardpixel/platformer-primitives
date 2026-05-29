@@ -8,6 +8,19 @@
 --   :update(dt) :draw()    (the usual loop)
 --   :keypressed(k) :keyreleased(k)   (optional)
 
+---@class Example          A playable example module (see examples/*.lua)
+---@field name string
+---@field blurb string
+---@field help string
+---@field load fun(self: Example)
+---@field update? fun(self: Example, dt: number)
+---@field draw? fun(self: Example)
+---@field keypressed? fun(self: Example, key: string)
+---@field keyreleased? fun(self: Example, key: string)
+---@field startSlide? fun(self: Example, side: string, target: integer, spawn: integer[])
+---@field startFade? fun(self: Example, target: integer, spawn: integer[])
+
+---@type Example[]
 local examples = {
     require("examples.character_controller"),
     require("examples.camera_controller"),
@@ -16,6 +29,7 @@ local examples = {
 }
 
 local state = "menu"   -- "menu" | "scene"
+---@type Example?
 local current = nil
 local selected = 1
 local showHelp = true
@@ -96,7 +110,7 @@ end
 
 function love.update(dt)
     dt = math.min(dt, 1 / 30)  -- clamp big hitches (e.g. window drag) for stable physics
-    if state == "scene" and current.update then current:update(dt) end
+    if state == "scene" and current and current.update then current:update(dt) end
 end
 
 -- ---------------------------------------------------------------------------
@@ -137,6 +151,7 @@ end
 -- In-scene HUD
 -- ---------------------------------------------------------------------------
 function drawHUD()
+    if not current then return end
     local w = love.graphics.getWidth()
     -- top bar
     love.graphics.setColor(0, 0, 0, 0.45)
@@ -162,7 +177,7 @@ function love.draw()
     if state == "menu" then
         drawMenu()
     else
-        if current.draw then current:draw() end
+        if current and current.draw then current:draw() end
         drawHUD()
     end
 end
@@ -180,10 +195,10 @@ function love.keypressed(key)
     else
         if key == "escape" then state = "menu"
         elseif key == "h" then showHelp = not showHelp
-        elseif current.keypressed then current:keypressed(key) end
+        elseif current and current.keypressed then current:keypressed(key) end
     end
 end
 
 function love.keyreleased(key)
-    if state == "scene" and current.keyreleased then current:keyreleased(key) end
+    if state == "scene" and current and current.keyreleased then current:keyreleased(key) end
 end
